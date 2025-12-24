@@ -14,15 +14,56 @@ npx create-turbo@latest
 
 This Turborepo includes the following packages/apps:
 
-### Apps and Packages
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+---
+
+## Repository Structure
+
+```
+Root
+├── package.json
+├── pnpm-lock.yaml
+├── pnpm-workspace.yaml
+├── README.md
+├── turbo.json
+│
+├── apps/
+│   ├── api-rust/                # Rust API service
+│   │   ├── Cargo.toml
+│   │   └── src/main.rs
+│   ├── web/                     # Next.js web application
+│   │   ├── app/
+│   │   ├── public/
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   └── worker-notifications/    # Rust worker for notifications
+│       ├── Cargo.toml
+│       └── src/main.rs
+│
+├── infra/
+│   └── docker/                  # Infrastructure and Docker-related files
+│
+└── packages/
+		├── eslint-config/           # Shared ESLint configurations
+		│   ├── base.js
+		│   ├── next.js
+		│   ├── react-internal.js
+		│   └── package.json
+		├── typescript-config/       # Shared TypeScript configurations
+		│   ├── base.json
+		│   ├── nextjs.json
+		│   ├── react-library.json
+		│   └── package.json
+		└── ui/                      # Shared React UI components
+				├── src/button.tsx
+				├── src/card.tsx
+				├── src/code.tsx
+				├── package.json
+				└── tsconfig.json
+```
+
+Each module is self-contained, supporting modular development and code sharing across the monorepo.
 
 ### Utilities
 
