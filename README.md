@@ -1,3 +1,6 @@
+## Repository Structure
+
+```
 identra/
 ├── .github/                        # CI/CD Workflows (Rust Lint, Docker Build)
 ├── Cargo.toml                      # Workspace Definition
@@ -39,3 +42,8 @@ identra/
 └── tools/                          # Developer Scripts
     ├── init_db.sh                  # Spin up local Postgres + pgvector
     └── mock_enclave.sh             # Run enclave logic locally for testing
+
+```
+
+
+# identra
