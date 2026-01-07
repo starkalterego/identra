@@ -1,5 +1,6 @@
 use tauri::{State, AppHandle, Manager};
 use crate::state::{NexusState, VaultStatus};
+use crate::ipc_client::VaultClient;
 use uuid::Uuid;
 
 #[derive(serde::Serialize)]
@@ -73,4 +74,50 @@ pub async fn toggle_main_window(app: AppHandle) -> Result<(), String> {
         main.set_focus().map_err(|e| e.to_string())?;
     }
     Ok(())
+}
+
+// ================ VAULT IPC COMMANDS ================
+
+#[tauri::command]
+pub async fn vault_store_key(identity_id: String, key: Vec<u8>) -> Result<String, String> {
+    let mut client = VaultClient::connect()
+        .await
+        .map_err(|e| format!("Failed to connect to vault: {}", e))?;
+    
+    client.store_key(identity_id, key)
+        .await
+        .map_err(|e| format!("Failed to store key: {}", e))
+}
+
+#[tauri::command]
+pub async fn vault_retrieve_key(identity_id: String) -> Result<Vec<u8>, String> {
+    let mut client = VaultClient::connect()
+        .await
+        .map_err(|e| format!("Failed to connect to vault: {}", e))?;
+    
+    client.retrieve_key(identity_id)
+        .await
+        .map_err(|e| format!("Failed to retrieve key: {}", e))
+}
+
+#[tauri::command]
+pub async fn vault_delete_key(identity_id: String) -> Result<String, String> {
+    let mut client = VaultClient::connect()
+        .await
+        .map_err(|e| format!("Failed to connect to vault: {}", e))?;
+    
+    client.delete_key(identity_id)
+        .await
+        .map_err(|e| format!("Failed to delete key: {}", e))
+}
+
+#[tauri::command]
+pub async fn vault_key_exists(identity_id: String) -> Result<bool, String> {
+    let mut client = VaultClient::connect()
+        .await
+        .map_err(|e| format!("Failed to connect to vault: {}", e))?;
+    
+    client.key_exists(identity_id)
+        .await
+        .map_err(|e| format!("Failed to check key existence: {}", e))
 }

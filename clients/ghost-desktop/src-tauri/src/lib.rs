@@ -1,5 +1,6 @@
 mod state;
 mod commands;
+mod ipc_client;
 
 use tauri::{Manager, WebviewWindowBuilder};
 use state::NexusState;
@@ -14,7 +15,11 @@ pub fn run() {
             commands::get_system_status,
             commands::vault_memory,
             commands::toggle_launcher,
-            commands::toggle_main_window
+            commands::toggle_main_window,
+            commands::vault_store_key,
+            commands::vault_retrieve_key,
+            commands::vault_delete_key,
+            commands::vault_key_exists
         ])
         .setup(|app| {
             let main_window = app.get_webview_window("main").unwrap();

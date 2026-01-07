@@ -1,25 +1,28 @@
 use anyhow::Result;
-use vault_daemon::{KeyStorage, VaultServer};
+use vault_daemon::VaultServer;
 
 #[tokio::main]
 async fn main() -> Result<()> {
     println!("🔐 Identra Vault Daemon starting...");
     println!("📍 Local secure storage initialized");
-    
-    // Initialize OS keychain
-    let keychain = vault_daemon::keychain::create_key_storage();
     println!("🔑 OS Keychain integration active");
     
     // Initialize IPC server
     let server = VaultServer::new();
-    server.start().await?;
     
-    println!("✅ Vault Daemon ready");
-    println!("🎯 Listening for IPC commands from Tauri...");
+    // Start listening for IPC connections
+    // This will block until shutdown signal
+    tokio::select! {
+        result = server.start() => {
+            if let Err(e) = result {
+                eprintln!("❌ Server error: {}", e);
+            }
+        }
+        _ = tokio::signal::ctrl_c() => {
+            println!("\n🛑 Shutdown signal received");
+        }
+    }
     
-    // Keep daemon running
-    tokio::signal::ctrl_c().await?;
     println!("🛑 Shutting down Vault Daemon...");
-    
     Ok(())
 }
