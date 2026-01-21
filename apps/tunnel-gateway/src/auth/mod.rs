@@ -1,9 +1,6 @@
-pub mod jwt;
-pub mod user_db;
 pub mod service;
 pub mod middleware;
+pub mod supabase_client;
 
-pub use jwt::{JwtManager, Claims};
-pub use user_db::UserDatabase;
 pub use service::AuthServiceImpl;
-pub use middleware::AuthInterceptor;
+pub use supabase_client::SupabaseClient;
