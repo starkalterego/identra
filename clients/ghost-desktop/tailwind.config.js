@@ -52,11 +52,16 @@ export default {
       },
       animation: {
         'fade': 'fade 120ms ease-out',
+        'slide-in-left': 'slide-in-left 200ms ease-out',
       },
       keyframes: {
         'fade': {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },
+        },
+        'slide-in-left': {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(0)' },
         },
       },
     },
