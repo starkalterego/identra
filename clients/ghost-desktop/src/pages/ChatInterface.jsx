@@ -466,9 +466,9 @@ export default function ChatInterface() {
                       <Send className="w-5 h-5" />
                     </button>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 justify-end">
                     <span className="text-[10px] font-semibold text-identra-text-tertiary/80 uppercase tracking-[0.16em] shrink-0">
-                      Reasoning Engine
+                      {currentModel?.name}
                     </span>
                     <div className="flex items-center gap-2">
                       {models.map((model) => (
@@ -564,9 +564,9 @@ export default function ChatInterface() {
                       <Send className="w-5 h-5" />
                     </button>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 justify-end">
                     <span className="text-[10px] font-semibold text-identra-text-tertiary/80 uppercase tracking-[0.16em] shrink-0">
-                      Reasoning Engine
+                      {currentModel?.name}
                     </span>
                     <div className="flex items-center gap-2">
                       {models.map((model) => (

@@ -9,7 +9,7 @@ default:
 # Run the Desktop App (Tauri + React) - Manish + OmmPrakash
 dev-desktop:
     @echo "Starting Identra Desktop App..."
-    cd clients/ghost-desktop && yarn install && yarn tauri dev
+    cd clients/ghost-desktop && yarn install && LD_PRELOAD=/lib/x86_64-linux-gnu/libpthread.so.0 yarn tauri dev
 
 # Run the Tunnel Gateway (Rust gRPC Service) - Sarthak
 dev-gateway:
