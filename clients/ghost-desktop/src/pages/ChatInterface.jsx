@@ -17,6 +17,30 @@ import {
 } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 
+function ClaudeIcon({ className }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <rect x="3" y="3" width="18" height="18" rx="4" ry="4" />
+      <circle cx="12" cy="12" r="4" />
+    </svg>
+  );
+}
+function GeminiIcon({ className }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
+      <path d="M12 2L14.5 8.5L21 9L16 13.5L17.5 20L12 16.5L6.5 20L8 13.5L3 9L9.5 8.5L12 2Z" />
+    </svg>
+  );
+}
+function OpenAIIcon({ className }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M12 2L4 8V16L12 22L20 16V8L12 2Z" />
+    </svg>
+  );
+}
+const modelIcons = { claude: ClaudeIcon, gemini: GeminiIcon, gpt: OpenAIIcon };
+
 export default function ChatInterface() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -48,9 +72,9 @@ export default function ChatInterface() {
   }, [theme]);
 
   const models = [
-    { id: "claude", name: "Claude 3.5 Sonnet", color: "identra-claude", icon: "⚡" },
-    { id: "gemini", name: "Gemini 1.5 Pro", color: "identra-gemini", icon: "✦" },
-    { id: "gpt", name: "GPT-4o", color: "identra-gpt", icon: "◆" }
+    { id: "claude", name: "Claude 3.5 Sonnet", color: "identra-claude" },
+    { id: "gemini", name: "Gemini 1.5 Pro", color: "identra-gemini" },
+    { id: "gpt", name: "GPT-4o", color: "identra-gpt" }
   ];
 
   const contextDocuments = [
@@ -442,8 +466,8 @@ export default function ChatInterface() {
                       <Send className="w-5 h-5" />
                     </button>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-semibold text-identra-text-tertiary/80 uppercase tracking-[0.16em]">
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] font-semibold text-identra-text-tertiary/80 uppercase tracking-[0.16em] shrink-0">
                       Reasoning Engine
                     </span>
                     <div className="flex items-center gap-2">
@@ -451,14 +475,17 @@ export default function ChatInterface() {
                         <button
                           key={model.id}
                           onClick={() => setSelectedModel(model.id)}
-                          className={`flex items-center justify-center w-8 h-8 rounded-full border transition-all duration-100 ${
+                          className={`flex items-center justify-center w-8 h-8 rounded-full border transition-all duration-100 p-1.5 ${
                             selectedModel === model.id
                               ? 'border-identra-primary/80 bg-identra-surface/80 shadow-[0_0_10px_rgba(120,119,198,0.5)]'
                               : 'border-identra-border-subtle bg-identra-surface/60 hover:border-identra-primary/60'
                           }`}
                           title={model.name}
                         >
-                          <span className="text-sm">{model.icon}</span>
+                          {(() => {
+                          const Icon = modelIcons[model.id];
+                          return Icon ? <Icon className="w-full h-full text-identra-text-secondary" /> : null;
+                        })()}
                         </button>
                       ))}
                     </div>
@@ -537,8 +564,8 @@ export default function ChatInterface() {
                       <Send className="w-5 h-5" />
                     </button>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-semibold text-identra-text-tertiary/80 uppercase tracking-[0.16em]">
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] font-semibold text-identra-text-tertiary/80 uppercase tracking-[0.16em] shrink-0">
                       Reasoning Engine
                     </span>
                     <div className="flex items-center gap-2">
@@ -546,14 +573,17 @@ export default function ChatInterface() {
                         <button
                           key={model.id}
                           onClick={() => setSelectedModel(model.id)}
-                          className={`flex items-center justify-center w-8 h-8 rounded-full border transition-all duration-100 ${
+                          className={`flex items-center justify-center w-8 h-8 rounded-full border transition-all duration-100 p-1.5 ${
                             selectedModel === model.id
                               ? 'border-identra-primary/80 bg-identra-surface/80 shadow-[0_0_10px_rgba(120,119,198,0.5)]'
                               : 'border-identra-border-subtle bg-identra-surface/60 hover:border-identra-primary/60'
                           }`}
                           title={model.name}
                         >
-                          <span className="text-sm">{model.icon}</span>
+                          {(() => {
+                          const Icon = modelIcons[model.id];
+                          return Icon ? <Icon className="w-full h-full text-identra-text-secondary" /> : null;
+                        })()}
                         </button>
                       ))}
                     </div>
