@@ -33,7 +33,15 @@ impl VaultService for VaultServiceImpl {
             .await
             .map_err(|e| Status::unavailable(format!("Vault daemon not available: {}", e)))?;
         
-        client.store_key(req.key_id.clone(), req.key_data)
+        // Convert protobuf expires_at (Timestamp) to Unix timestamp
+        let expires_at = req.expires_at.map(|ts| ts.seconds);
+        
+        client.store_key(
+            req.key_id.clone(), 
+            req.key_data,
+            req.metadata,
+            expires_at,
+        )
             .await
             .map_err(|e| Status::internal(format!("Failed to store key: {}", e)))?;
         
@@ -55,16 +63,22 @@ impl VaultService for VaultServiceImpl {
             .await
             .map_err(|e| Status::unavailable(format!("Vault daemon not available: {}", e)))?;
         
-        let key_data = client.retrieve_key(req.key_id.clone())
+        let (key_data, metadata, created_at, expires_at) = client.retrieve_key(req.key_id.clone())
             .await
             .map_err(|e| Status::not_found(format!("Key not found: {}", e)))?;
         
         tracing::info!("Retrieved key: {}", req.key_id);
         
+        // Convert Unix timestamp to protobuf Timestamp
+        let created_at_ts = Some(prost_types::Timestamp {
+            seconds: created_at,
+            nanos: 0,
+        });
+        
         Ok(Response::new(RetrieveKeyResponse {
             key_data,
-            metadata: std::collections::HashMap::new(), // TODO: Store metadata in vault-daemon
-            created_at: None, // TODO: Add timestamp tracking in vault-daemon
+            metadata,
+            created_at: created_at_ts,
         }))
     }
     
@@ -94,12 +108,22 @@ impl VaultService for VaultServiceImpl {
         &self,
         _request: Request<ListKeysRequest>,
     ) -> Result<Response<ListKeysResponse>, Status> {
-        // TODO: Implement list_keys in vault-daemon IPC protocol
-        // For now, return empty list as this requires vault-daemon protocol update
-        tracing::warn!("list_keys not yet implemented in vault-daemon");
+        let mut client = VaultClient::connect()
+            .await
+            .map_err(|e| Status::unavailable(format!("Vault daemon not available: {}", e)))?;
+        
+        let key_ids = client.list_keys()
+            .await
+            .map_err(|e| {
+                tracing::warn!("list_keys not supported: {}", e);
+                // Windows Credential Manager doesn't support listing
+                Status::unimplemented("list_keys not supported by OS keychain")
+            })?;
+        
+        tracing::info!("Listed {} keys", key_ids.len());
         
         Ok(Response::new(ListKeysResponse {
-            key_ids: vec![],
+            key_ids,
             next_page_token: String::new(),
         }))
     }

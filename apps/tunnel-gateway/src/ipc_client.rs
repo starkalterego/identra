@@ -11,16 +11,28 @@ const IPC_PIPE_NAME: &str = "@identra-vault";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum VaultRequest {
-    Store { identity_id: String, key: Vec<u8> },
+    Store { 
+        identity_id: String, 
+        key: Vec<u8>,
+        metadata: std::collections::HashMap<String, String>,
+        expires_at: Option<i64>,
+    },
     Retrieve { identity_id: String },
     Delete { identity_id: String },
     Exists { identity_id: String },
+    ListKeys,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum VaultResponse {
     Success { message: String },
-    KeyData { key: Vec<u8> },
+    KeyData { 
+        key: Vec<u8>,
+        metadata: std::collections::HashMap<String, String>,
+        created_at: i64,
+        expires_at: Option<i64>,
+    },
+    KeyList { keys: Vec<String> },
     Exists { exists: bool },
     Error { message: String },
 }
@@ -102,8 +114,14 @@ impl VaultClient {
         Ok(response)
     }
 
-    pub async fn store_key(&mut self, identity_id: String, key: Vec<u8>) -> Result<String, VaultClientError> {
-        let response = self.send_request(VaultRequest::Store { identity_id, key }).await?;
+    pub async fn store_key(
+        &mut self, 
+        identity_id: String, 
+        key: Vec<u8>,
+        metadata: std::collections::HashMap<String, String>,
+        expires_at: Option<i64>,
+    ) -> Result<String, VaultClientError> {
+        let response = self.send_request(VaultRequest::Store { identity_id, key, metadata, expires_at }).await?;
         match response {
             VaultResponse::Success { message } => Ok(message),
             VaultResponse::Error { message } => Err(VaultClientError::ReceiveFailed(message)),
@@ -111,10 +129,12 @@ impl VaultClient {
         }
     }
 
-    pub async fn retrieve_key(&mut self, identity_id: String) -> Result<Vec<u8>, VaultClientError> {
+    pub async fn retrieve_key(&mut self, identity_id: String) -> Result<(Vec<u8>, std::collections::HashMap<String, String>, i64, Option<i64>), VaultClientError> {
         let response = self.send_request(VaultRequest::Retrieve { identity_id }).await?;
         match response {
-            VaultResponse::KeyData { key } => Ok(key),
+            VaultResponse::KeyData { key, metadata, created_at, expires_at } => {
+                Ok((key, metadata, created_at, expires_at))
+            }
             VaultResponse::Error { message } => Err(VaultClientError::ReceiveFailed(message)),
             _ => Err(VaultClientError::ReceiveFailed("Unexpected response type".to_string())),
         }
@@ -133,6 +153,15 @@ impl VaultClient {
         let response = self.send_request(VaultRequest::Exists { identity_id }).await?;
         match response {
             VaultResponse::Exists { exists } => Ok(exists),
+            VaultResponse::Error { message } => Err(VaultClientError::ReceiveFailed(message)),
+            _ => Err(VaultClientError::ReceiveFailed("Unexpected response type".to_string())),
+        }
+    }
+    
+    pub async fn list_keys(&mut self) -> Result<Vec<String>, VaultClientError> {
+        let response = self.send_request(VaultRequest::ListKeys).await?;
+        match response {
+            VaultResponse::KeyList { keys } => Ok(keys),
             VaultResponse::Error { message } => Err(VaultClientError::ReceiveFailed(message)),
             _ => Err(VaultClientError::ReceiveFailed("Unexpected response type".to_string())),
         }

@@ -19,10 +19,16 @@ const PIPE_NAME: &str = "/tmp/identra-vault.sock";
 /// IPC message types
 #[derive(Debug, Serialize, Deserialize)]
 pub enum VaultRequest {
-    StoreKey { key_id: String, key_data: Vec<u8> },
+    StoreKey { 
+        key_id: String, 
+        key_data: Vec<u8>,
+        metadata: std::collections::HashMap<String, String>,
+        expires_at: Option<i64>, // Unix timestamp
+    },
     RetrieveKey { key_id: String },
     DeleteKey { key_id: String },
     KeyExists { key_id: String },
+    ListKeys,
     Ping,
     Shutdown,
 }
@@ -30,7 +36,13 @@ pub enum VaultRequest {
 #[derive(Debug, Serialize, Deserialize)]
 pub enum VaultResponse {
     Success,
-    KeyData(Vec<u8>),
+    KeyData {
+        key_data: Vec<u8>,
+        metadata: std::collections::HashMap<String, String>,
+        created_at: i64,
+        expires_at: Option<i64>,
+    },
+    KeyList(Vec<String>),
     Exists(bool),
     Error(String),
     Pong,
@@ -193,9 +205,16 @@ impl VaultServer {
                 println!("🏓 Ping received");
                 VaultResponse::Pong
             }
-            VaultRequest::StoreKey { key_id, key_data } => {
+            VaultRequest::StoreKey { key_id, key_data, metadata, expires_at } => {
                 println!("📝 Storing key: {}", key_id);
-                match keychain.store_key(&key_id, &key_data) {
+                
+                let key_metadata = crate::keychain::KeyMetadata {
+                    created_at: chrono::Utc::now().timestamp(),
+                    expires_at,
+                    custom: metadata,
+                };
+                
+                match keychain.store_key(&key_id, &key_data, key_metadata) {
                     Ok(_) => VaultResponse::Success,
                     Err(e) => VaultResponse::Error(format!("Failed to store key: {}", e)),
                 }
@@ -203,7 +222,22 @@ impl VaultServer {
             VaultRequest::RetrieveKey { key_id } => {
                 println!("🔍 Retrieving key: {}", key_id);
                 match keychain.retrieve_key(&key_id) {
-                    Ok(data) => VaultResponse::KeyData(data),
+                    Ok((key_data, metadata)) => {
+                        // Check expiration
+                        if let Some(expires_at) = metadata.expires_at {
+                            let now = chrono::Utc::now().timestamp();
+                            if now > expires_at {
+                                return VaultResponse::Error("Key has expired".to_string());
+                            }
+                        }
+                        
+                        VaultResponse::KeyData {
+                            key_data,
+                            metadata: metadata.custom,
+                            created_at: metadata.created_at,
+                            expires_at: metadata.expires_at,
+                        }
+                    }
                     Err(e) => VaultResponse::Error(format!("Failed to retrieve key: {}", e)),
                 }
             }
@@ -216,10 +250,18 @@ impl VaultServer {
             }
             VaultRequest::KeyExists { key_id } => {
                 let exists = keychain.key_exists(&key_id);
+                println!("🔎 Key exists: {} = {}", key_id, exists);
                 VaultResponse::Exists(exists)
             }
+            VaultRequest::ListKeys => {
+                println!("📋 Listing keys");
+                match keychain.list_keys() {
+                    Ok(keys) => VaultResponse::KeyList(keys),
+                    Err(e) => VaultResponse::Error(format!("Failed to list keys: {}", e)),
+                }
+            }
             VaultRequest::Shutdown => {
-                println!("🛑 Shutdown request received");
+                println!("🛑 Shutdown requested");
                 VaultResponse::ShuttingDown
             }
         }

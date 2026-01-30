@@ -10,6 +10,7 @@ mod auth;
 
 use database::MemoryDatabase;
 use services::memory::MemoryServiceImpl;
+use services::vault::VaultServiceImpl;
 use auth::{SupabaseClient, AuthServiceImpl};
 use identra_proto::auth::auth_service_server::AuthServiceServer;
 
@@ -32,6 +33,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Initialize services
     let memory_service = MemoryServiceImpl::new(db.clone());
     let auth_service = AuthServiceImpl::new(supabase);
+    let vault_service = VaultServiceImpl::new();
 
     let addr = "[::1]:50051".parse()?;
     tracing::info!("Listening on {}", addr);
@@ -39,6 +41,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Server::builder()
         .add_service(memory_service.into_server())
         .add_service(AuthServiceServer::new(auth_service))
+        .add_service(vault_service.into_server())
         .serve(addr)
         .await?;
 
